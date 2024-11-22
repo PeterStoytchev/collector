@@ -1,12 +1,24 @@
-import requests, hashlib
+import requests, hashlib, sys, time, random
 import os.path
+
+GLOBAL_REQUEST_COUNTER = 0
+
+def sleep_needed():
+    sleep_ammount = None
+    if GLOBAL_REQUEST_COUNTER == random.randrange(40, 60):
+        sleep_ammount = random.randrange(10, 15)
+    else:
+        sleep_ammount = 4
+
+    time.sleep(sleep_ammount)
+    print(f"Sleeping for {sleep_ammount}")
 
 class Cached:
     def __init__(self, url: str):
-        self.url = url
+        self.url = f"https://www.auto-data.net{url}"
         self.thing = None
 
-        self.__fname = f"cache/{hashlib.md5(url.encode()).hexdigest()}.cache"
+        self.__fname = f"cache/{hashlib.md5(self.url.encode()).hexdigest()}.cache"
 
         if os.path.exists("cache/"):
             if os.path.isfile(self.__fname):
@@ -20,7 +32,15 @@ class Cached:
         self.refresh()
 
     def refresh(self):
+        print("Cache miss")
+
+        sleep_needed()
+
         resp = requests.get(self.url)
+        if resp.status_code == 429:
+            print(f"Got 429 from {self.url}")
+            sys.exit(1)
+
         resp.encoding = resp.apparent_encoding
 
         f = open(self.__fname, "w", encoding="utf-8")
