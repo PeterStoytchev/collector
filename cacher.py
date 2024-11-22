@@ -1,5 +1,6 @@
-import requests, hashlib, sys, time, random
-import os.path
+import requests, hashlib, sys, time, random, os.path, logging
+
+logger = logging.getLogger()
 
 GLOBAL_REQUEST_COUNTER = 0
 
@@ -11,7 +12,7 @@ def sleep_needed():
         sleep_ammount = 4
 
     time.sleep(sleep_ammount)
-    print(f"Sleeping for {sleep_ammount}")
+    logger.info(f"Sleeping for {sleep_ammount}")
 
 class Cached:
     def __init__(self, url: str):
@@ -32,13 +33,13 @@ class Cached:
         self.refresh()
 
     def refresh(self):
-        print("Cache miss")
+        logger.warn("Cache miss")
 
         sleep_needed()
 
         resp = requests.get(self.url)
         if resp.status_code == 429:
-            print(f"Got 429 from {self.url}")
+            logger.fatal(f"Got 429 from {self.url}")
             sys.exit(1)
 
         resp.encoding = resp.apparent_encoding
