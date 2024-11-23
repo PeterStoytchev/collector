@@ -5,6 +5,8 @@ logger = logging.getLogger()
 GLOBAL_REQUEST_COUNTER = 0
 
 def sleep_needed():
+    global GLOBAL_REQUEST_COUNTER
+
     sleep_ammount = None
     if GLOBAL_REQUEST_COUNTER == random.randrange(40, 60):
         sleep_ammount = random.randrange(10, 15)
@@ -13,7 +15,7 @@ def sleep_needed():
         sleep_ammount = 4
 
     GLOBAL_REQUEST_COUNTER = GLOBAL_REQUEST_COUNTER + 1
-    
+
     time.sleep(sleep_ammount)
     logger.info(f"Sleeping for {sleep_ammount}")
 
