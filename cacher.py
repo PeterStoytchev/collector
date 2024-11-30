@@ -35,8 +35,8 @@ class Cached:
         env_sleep()
 
         resp = requests.get(self.url)
-        if resp.status_code == 429:
-            logger.fatal(f"Got 429 from {self.url}")
+        if resp.status_code != 200:
+            logger.fatal(f"Got {resp.status_code} from {self.url}. Exiting!")
             sys.exit(1)
 
         resp.encoding = resp.apparent_encoding

@@ -1,8 +1,12 @@
 # Custom
 .vscode/
+.github/
+logs/
+
 *.cache
 *.json
 *.log
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
