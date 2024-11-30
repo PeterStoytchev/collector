@@ -2,14 +2,13 @@ import requests, hashlib, sys, time, random, os.path, logging
 
 logger = logging.getLogger()
 
-
 def env_sleep():
     sleep_min = os.getenv("SLEEP_MIN", 10)
-    sleep_max = os.getenv("SLEEP_MAX", 40)
+    sleep_max = os.getenv("SLEEP_MAX", 30)
 
     sleep_ammount = random.randrange(sleep_min, sleep_max)
-    time.sleep(sleep_ammount)
     logger.info(f"Sleeping for {sleep_ammount}")
+    time.sleep(sleep_ammount)
     return
 
 class Cached:
@@ -31,7 +30,7 @@ class Cached:
         self.refresh()
 
     def refresh(self):
-        logger.warn("Cache miss")
+        logger.debug("Cache miss")
 
         env_sleep()
 
