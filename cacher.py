@@ -2,22 +2,15 @@ import requests, hashlib, sys, time, random, os.path, logging
 
 logger = logging.getLogger()
 
-GLOBAL_REQUEST_COUNTER = 0
 
-def sleep_needed():
-    global GLOBAL_REQUEST_COUNTER
+def env_sleep():
+    sleep_min = os.getenv("SLEEP_MIN", 10)
+    sleep_max = os.getenv("SLEEP_MAX", 40)
 
-    sleep_ammount = None
-    if GLOBAL_REQUEST_COUNTER == random.randrange(40, 60):
-        sleep_ammount = random.randrange(10, 15)
-        GLOBAL_REQUEST_COUNTER = 0
-    else:
-        sleep_ammount = 4
-
-    GLOBAL_REQUEST_COUNTER = GLOBAL_REQUEST_COUNTER + 1
-
+    sleep_ammount = random.randrange(sleep_min, sleep_max)
     time.sleep(sleep_ammount)
     logger.info(f"Sleeping for {sleep_ammount}")
+    return
 
 class Cached:
     def __init__(self, url: str):
@@ -40,7 +33,7 @@ class Cached:
     def refresh(self):
         logger.warn("Cache miss")
 
-        sleep_needed()
+        env_sleep()
 
         resp = requests.get(self.url)
         if resp.status_code == 429:

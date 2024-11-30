@@ -1,4 +1,4 @@
-import json, logging, os
+import json, logging, os, random
 
 from cacher import Cached
 from data import CarMeta
@@ -21,23 +21,28 @@ def get_all(resp: Cached, filters: list[Filter]) -> list:
 
     return final_elements
 
+def get_all_randomized(resp: Cached, filters: list[Filter]) -> list:
+    temp = get_all(resp, filters)
+    random.shuffle(temp)
+    return temp
+
 def compute_car_links_to_file(fname: str):
     brands_data = Cached("/en/allbrands")
 
     links = []
 
-    brands = get_all(brands_data, [Filter("a", {"class": "marki_blok"})])
+    brands = get_all_randomized(brands_data, [Filter("a", {"class": "marki_blok"})])
     for brand in brands:
         logger.info(f"Processing brand: {brand.name}")
         
         model_data = Cached(brand.link)
-        models = get_all(model_data, [Filter("a", {"class": "modeli"})])
+        models = get_all_randomized(model_data, [Filter("a", {"class": "modeli"})])
 
         for model in models:
             logger.info(f"Processing model: {model.name}")
             
             generations_data = Cached(model.link)
-            generations = get_all(generations_data, [Filter("a", {"class": "position"})])
+            generations = get_all_randomized(generations_data, [Filter("a", {"class": "position"})])
 
             for generation in generations:
                 logger.debug(f"Processing generation: {generation.name}")
@@ -47,7 +52,7 @@ def compute_car_links_to_file(fname: str):
                 tb_filter = Filter("table", {"class": "carlist"})
                 th_filter = Filter("th", {"class": "i"})
                 pos_filter = Filter("a")
-                trims = get_all(trim_data, [tb_filter, th_filter, pos_filter])
+                trims = get_all_randomized(trim_data, [tb_filter, th_filter, pos_filter])
 
                 for trim in trims:
                     links.append(trim.link)
