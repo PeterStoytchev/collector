@@ -1,4 +1,4 @@
-import json, logging, os, random
+import json, logging, os, random, sys
 
 from cacher import Cached
 from data import CarMeta
@@ -63,13 +63,19 @@ def compute_car_links_to_file(fname: str):
     f.close()
 
 def main():
-    if not os.path.exists("logs/"):
-        os.mkdir("logs/")
+    if len(sys.argv) < 2:
+        print("Usage: python list_builder.py <output_file_name>")
+        sys.exit(1)
+
+    LOGS_DIR = "logs-builder/"
+
+    if not os.path.exists(LOGS_DIR):
+        os.mkdir(LOGS_DIR)
     
-    logging.basicConfig(filename=f'logs/trail-{int(datetime.now().timestamp())}.log', level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    logging.basicConfig(filename=f'{LOGS_DIR}trail-{int(datetime.now().timestamp())}.log', level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     logger.info('Starting...')
 
-    compute_car_links_to_file("links.json")
+    compute_car_links_to_file(sys.argv[1])
 
     logger.info('Fin!')
 
