@@ -1,23 +1,29 @@
-import os, random, time, uuid
+import os, random, time, uuid, logging
 
 from pydo import Client
+
+logger = logging.getLogger()
 
 class ProxyManager:
     def __init__(self, max_proxies: int = 2):
         self.client = Client(token=os.getenv("DIGITALOCEAN_TOKEN"))
+        logging.debug("Setup DigitalOcean client.")
 
         self.proxies = []
         self.current_index = 0
 
         self.client.droplets.destroy_by_tag(tag_name="collector")
+        logging.info("Cleaned up existing collector instances.")
 
         useful_regions = self.compute_useful_regions()
-        
+        logging.debug(f"Working with regions: {useful_regions}")
+
         droplet_limit = self.client.account.get()["account"]["droplet_limit"] - len(self.client.droplets.list()["droplets"])
         droplet_ids = []
         for item in useful_regions:
+            droplet_name = f"test-{item['reg']}-{item['size']}-{str(uuid.uuid4())}"
             droplet_req = {
-                "name": f"test-{item['reg']}-{item['size']}-{str(uuid.uuid4())}",
+                "name": droplet_name,
                 "region": item['reg'],
                 "size": item['size'],
                 "image": "173608349",
@@ -32,12 +38,15 @@ class ProxyManager:
             droplet_id = resp["droplet"]["id"]
             droplet_ids.append(droplet_id)
 
+            logging.info(f"Creating instance with {droplet_name} with id {droplet_id}")
+
             if len(droplet_ids) == droplet_limit or len(droplet_ids) == max_proxies:
                 break
 
         for id in droplet_ids:
             self.proxies.append(Proxy(self.client, id))
 
+        logging.info("Sleeping for 10 seconds, to give some time to squid to come up on all instances.")
         time.sleep(10)
 
     def compute_useful_regions(self):
@@ -53,18 +62,21 @@ class ProxyManager:
 
     def get(self) -> dict:
         if self.current_index == len(self.proxies):
+            logging.info("All proxies have been iterated over, shuffling and resetting!")
             random.shuffle(self.proxies)
             self.current_index = 0
 
         final = self.proxies[self.current_index].get()
         self.current_index = self.current_index + 1
 
+        logging.info(f"Selected proxy {final}.")
         return {
             "http": final,
             "https": final
         }
     
     def close(self):
+        logging.info("Cleaning up instances.")
         self.client.droplets.destroy_by_tag(tag_name="collector")
     
 
@@ -75,13 +87,15 @@ class Proxy:
         self.client = client
 
         self.addr = self.get_public_ip()
+        
+        logging.info(f"Proxy with droplet id {self.droplet_id} is up at address {self.addr}")
 
 
     def get_public_ip(self):
         resp = self.client.droplets.get(self.droplet_id)
 
         while resp["droplet"]["status"] != "active":
-            print(f"Droplet {resp['droplet']['name']} not ready. Sleeping for 20 seconds")
+            logging.info(f"Droplet {resp['droplet']['name']} not ready. Sleeping for 20 seconds")
             time.sleep(5)
             resp = self.client.droplets.get(self.droplet_id)
 
@@ -93,10 +107,15 @@ class Proxy:
         pass
 
     def get(self) -> str:
+        logging.info(f"Proxy {self.droplet_id} is at {self.request_count} requests.")
+
         if self.request_count > os.environ.get("MAX_REQ_INSTANCE", 180):
+            logging.info(f"Proxy {self.droplet_id} at {self.addr} has been used {self.request_count}. Refreshing!")
+            
             self.refresh()
             self.request_count = 0
 
+            logging.info(f"Proxy {self.droplet_id} has been refreshed! New addr is {self.addr}.")
+
         self.request_count = self.request_count + 1
-        
         return f"http://{self.addr}:3128"
