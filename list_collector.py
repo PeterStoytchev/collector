@@ -14,12 +14,7 @@ def main():
         print("Usage: python list_collector.py <json_array_file>")
         sys.exit(1)
 
-    LOGS_DIR = "logs-collector/"
-
-    if not os.path.exists(LOGS_DIR):
-        os.mkdir(LOGS_DIR)
-    
-    logging.basicConfig(filename=f'{LOGS_DIR}trail-{int(datetime.now().timestamp())}.log', level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     logger.info('Starting...')
 
     f = open(sys.argv[1], "r", encoding="utf-8")
