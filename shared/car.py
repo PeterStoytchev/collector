@@ -1,5 +1,3 @@
-from opensearchpy import Document, IntegerRange, Text, Integer, Float, FloatRange
-
 from bs4 import BeautifulSoup as bs
 
 from filter import Filter, apply_filters
@@ -28,3 +26,15 @@ class Car:
 
     def to_json(self) -> str:
         return json.dumps(self.attrs)
+    
+
+class CarMeta:
+    def __init__(self, name: str, link: str):
+        self.name = name.strip()
+        self.link = link.strip()
+
+    def __str__(self):
+        return f"{self.name},{self.link}"
+    
+    def __repr__(self):
+        return str(self)

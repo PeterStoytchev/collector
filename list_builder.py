@@ -1,7 +1,7 @@
 import json, logging, os, random, sys
 
 from shared.cacher import Cached
-from shared.data import CarMeta
+from shared.car import CarMeta
 from shared.filter import Filter, apply_filters
 
 from datetime import datetime
