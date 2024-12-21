@@ -1,8 +1,8 @@
 import json, logging, os, random, sys
 
-from cacher import Cached
-from data import CarMeta
-from filter import Filter, apply_filters
+from shared.cacher import Cached
+from shared.data import CarMeta
+from shared.filter import Filter, apply_filters
 
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
