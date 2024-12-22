@@ -7,10 +7,12 @@ from shared.filter import Filter, apply_filters
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
 
+import cchardet, lxml
+
 logger = logging.getLogger()
 
 def get_all(resp: Cached, filters: list[Filter]) -> list:
-    sp = bs(resp.text, "html.parser")
+    sp = bs(resp.text, "lxml")
 
     elem = apply_filters(filters, sp)
 
@@ -57,7 +59,6 @@ def compute_car_links_to_file(fname: str):
                 for trim in trims:
                     links.append(trim.link)
             
-
     f = open(fname, "w", encoding="utf-8")
 
     # There seems to be an issue, where every link appears twice. This is to be investigated, but for now, just turn the list into a set, and then back again, before serialization
@@ -71,6 +72,7 @@ def main():
 
     logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     logger.info('Starting...')
+
 
     compute_car_links_to_file(sys.argv[1])
 
