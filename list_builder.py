@@ -59,7 +59,9 @@ def compute_car_links_to_file(fname: str):
             
 
     f = open(fname, "w", encoding="utf-8")
-    f.write(json.dumps(links))
+
+    # There seems to be an issue, where every link appears twice. This is to be investigated, but for now, just turn the list into a set, and then back again, before serialization
+    f.write(json.dumps(list(set(links))))
     f.close()
 
 def main():
