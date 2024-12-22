@@ -2,6 +2,7 @@ import json, logging, os, sys
 
 from shared.cacher import Cached
 from shared.car import Car
+from shared.proxymanager import ProxyManager
 
 from opensearchpy import OpenSearch
 
@@ -25,10 +26,15 @@ def main():
     except Exception as e:
         pass
 
-    for car_link in data:
-        car_data = Cached(car_link)
-        car = Car(car_data.text)
-        client.index(index='cars', body=car.attrs)
+    
+    pm = ProxyManager(24)
+    try:
+        for car_link in data:
+            car_data = Cached(car_link, pm)
+            car = Car(car_data.text)
+            client.index(index='cars', body=car.attrs)
+    finally:
+        pm.close()
 
 
     logger.info('Fin!')

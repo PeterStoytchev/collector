@@ -33,12 +33,20 @@ class Cached:
 
     def refresh(self):
         logger.debug("Cache miss")
+        prx = self.proxy_manager.get()
 
-        if self.proxy_manager is None:
-            resp = requests.get(self.url)
-        else:
-            resp = requests.get(self.url, proxies=self.proxy_manager.get())
-        
+        while True:
+            try:
+                if self.proxy_manager is None:
+                    resp = requests.get(self.url)
+                else:
+                    resp = requests.get(self.url, proxies=prx)
+            except Exception as e:
+                logging.info(f"Proxy {prx} not ready! Waiting for 10 seconds.")
+                time.sleep(10)
+            else:
+                break
+
         if resp.status_code != 200:
             logger.fatal(f"Got {resp.status_code} from {self.url}. Exiting!")
             sys.exit(1)

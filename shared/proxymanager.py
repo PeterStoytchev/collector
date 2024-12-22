@@ -4,9 +4,26 @@ from pydo import Client
 
 logger = logging.getLogger()
 
+def create_droplet(client: Client, region_slug: str, size: str):
+    droplet_name = f"test-{region_slug}-{size}-{str(uuid.uuid4())}"
+    droplet_req = {
+        "name": droplet_name,
+        "region": region_slug,
+        "size": size,
+        "image": "173608349",
+        "ssh_keys": ["ae:dd:ab:06:e4:ed:35:a5:8b:fa:a9:5c:e4:3a:fc:08"],
+        "tags": ["collector"],
+        "ipv6": False,
+        "backups": False,
+        "monitoring": True
+    }
+    resp = client.droplets.create(body=droplet_req)
+    return (resp["droplet"]["id"], droplet_name)
+
 class ProxyManager:
     def __init__(self, max_proxies: int = 2):
         self.client = Client(token=os.getenv("DIGITALOCEAN_TOKEN"))
+        logging.getLogger('pydo').setLevel(logging.WARNING)
         logging.debug("Setup DigitalOcean client.")
 
         self.proxies = []
@@ -21,21 +38,7 @@ class ProxyManager:
         droplet_limit = self.client.account.get()["account"]["droplet_limit"] - len(self.client.droplets.list()["droplets"])
         droplet_ids = []
         for item in useful_regions:
-            droplet_name = f"test-{item['reg']}-{item['size']}-{str(uuid.uuid4())}"
-            droplet_req = {
-                "name": droplet_name,
-                "region": item['reg'],
-                "size": item['size'],
-                "image": "173608349",
-                "ssh_keys": ["ae:dd:ab:06:e4:ed:35:a5:8b:fa:a9:5c:e4:3a:fc:08"],
-                "tags": ["collector"],
-                "ipv6": False,
-                "backups": False,
-                "monitoring": True
-            }
-            resp = self.client.droplets.create(body=droplet_req)
-            
-            droplet_id = resp["droplet"]["id"]
+            (droplet_id, droplet_name) = create_droplet(self.client, item["reg"], item["size"])
             droplet_ids.append(droplet_id)
 
             logging.info(f"Creating instance with {droplet_name} with id {droplet_id}")
@@ -46,8 +49,8 @@ class ProxyManager:
         for id in droplet_ids:
             self.proxies.append(Proxy(self.client, id))
 
-        logging.info("Sleeping for 10 seconds, to give some time to squid to come up on all instances.")
-        time.sleep(10)
+        logging.info("Sleeping for 5 seconds, to give some time to squid to come up on all instances.")
+        time.sleep(5)
 
     def compute_useful_regions(self):
         regions = self.client.regions.list()
@@ -95,8 +98,8 @@ class Proxy:
         resp = self.client.droplets.get(self.droplet_id)
 
         while resp["droplet"]["status"] != "active":
-            logging.info(f"Droplet {resp['droplet']['name']} not ready. Sleeping for 20 seconds")
-            time.sleep(5)
+            logging.info(f"Droplet {resp['droplet']['name']} not ready. Sleeping for 10 seconds")
+            time.sleep(10)
             resp = self.client.droplets.get(self.droplet_id)
 
         for net in resp["droplet"]["networks"]["v4"]:
@@ -104,7 +107,22 @@ class Proxy:
                 return net["ip_address"]
 
     def refresh(self):
-        pass
+        logging.info(f"Refreshing proxy {self.droplet_id} with ip {self.addr}")
+        
+        current_region = self.client.droplets.get(self.droplet_id)["droplet"]["region"]
+        
+        self.client.droplets.destroy(self.droplet_id)
+        logging.info(f"Destoryed droplet {self.droplet_id}")
+
+        (droplet_id, droplet_name) = create_droplet(self.client, current_region["slug"], current_region["sizes"][0])
+        logging.info(f"Created new droplet {droplet_id} with name {droplet_name}")
+
+        self.droplet_id = droplet_id
+        self.request_count = 0
+        self.addr = self.get_public_ip()
+        
+        logging.info(f"Proxy updated!")
+
 
     def get(self) -> str:
         logging.info(f"Proxy {self.droplet_id} is at {self.request_count} requests.")
