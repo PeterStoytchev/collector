@@ -1,11 +1,11 @@
-from proxymanager import ProxyManager
+from shared.proxymanager import ProxyManager
 import requests, hashlib, sys, time, random, os.path, logging
 
 logger = logging.getLogger()
 
 def env_sleep():
-    sleep_min = os.getenv("SLEEP_MIN", 10)
-    sleep_max = os.getenv("SLEEP_MAX", 30)
+    sleep_min = os.getenv("SLEEP_MIN", 1)
+    sleep_max = os.getenv("SLEEP_MAX", 3)
 
     sleep_ammount = random.randrange(sleep_min, sleep_max)
     logger.info(f"Sleeping for {sleep_ammount}")

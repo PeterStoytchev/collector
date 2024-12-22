@@ -1,11 +1,9 @@
-import json, logging, os, random, sys
+import json, logging, os, sys
 
 from shared.cacher import Cached
-from shared.filter import Filter, apply_filters
 from shared.car import Car
 
-from datetime import datetime
-from bs4 import BeautifulSoup as bs
+from opensearchpy import OpenSearch
 
 logger = logging.getLogger()
 
@@ -21,10 +19,17 @@ def main():
     data = json.loads(f.read())
     f.close()
 
-    car_link = data[0]
-    car_data = Cached(car_link)
-    car = Car(car_data.text)
-    # TODO: car.to_json() -> OpenSearch
+    client = OpenSearch(hosts=[os.environ.get("OPENSEARCH_URI")], verify_certs = False, ssl_show_warn=False)
+    try:
+        client.indices.create('cars')
+    except Exception as e:
+        pass
+
+    for car_link in data:
+        car_data = Cached(car_link)
+        car = Car(car_data.text)
+        client.index(index='cars', body=car.attrs)
+
 
     logger.info('Fin!')
 

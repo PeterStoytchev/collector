@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup as bs
 
-from filter import Filter, apply_filters
+from shared.filter import Filter, apply_filters
 import json
 
 def clean_str(text: str) -> str:
