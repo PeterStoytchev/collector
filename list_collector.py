@@ -1,4 +1,4 @@
-import json, logging, os, sys
+import json, logging, os, sys, signal
 
 from shared.cacher import Cached
 from shared.car import Car
@@ -8,7 +8,18 @@ from opensearchpy import OpenSearch
 
 logger = logging.getLogger()
 
+pm = ProxyManager()
+
+def exit_gracefully():
+    pm.close()
+    logger.info('Fin!')
+    sys.exit(0)
+
 def main():
+    # Handle signals
+    signal.signal(signal.SIGINT, exit_gracefully)
+    signal.signal(signal.SIGTERM, exit_gracefully)
+    
     if len(sys.argv) < 2:
         print("Usage: python list_collector.py <json_array_file>")
         sys.exit(1)
@@ -24,18 +35,17 @@ def main():
     try:
         client.indices.create('cars')
     except Exception as e:
-        pass
+        # Make sure that you have a fresh index every time you run
+        client.indices.delete('cars')
+        client.indices.create('cars')
 
-    pm = ProxyManager()
     try:
         for car_link in data:
             car_data = Cached(car_link, pm)
             car = Car(car_data.text)
             client.index(index='cars', body=car.attrs)
     finally:
-        pm.close()
-
-    logger.info('Fin!')
+        exit_gracefully()
 
 if __name__ == "__main__":
     main()
