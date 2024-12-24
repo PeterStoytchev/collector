@@ -1,5 +1,7 @@
-from shared.proxymanager import ProxyManager
 import requests, hashlib, sys, time, random, os.path, logging
+from shared.proxymanager import ProxyManager
+
+from fake_useragent import UserAgent
 
 logger = logging.getLogger()
 
@@ -17,6 +19,7 @@ class Cached:
         self.url = f"https://www.auto-data.net{url}"
         self.thing = None
         self.proxy_manager = proxy_manager
+        self.agent_faker = UserAgent()
 
         self.__fname = f"cache/{hashlib.md5(self.url.encode()).hexdigest()}.cache"
 
@@ -33,14 +36,16 @@ class Cached:
 
     def refresh(self):
         logger.debug("Cache miss")
-        prx = self.proxy_manager.get()
+
+        current_headers = {'User-Agent': str(self.agent_faker.random)}
+        prx = None
+
+        if self.proxy_manager is not None:
+            prx = self.proxy_manager.get()
 
         while True:
             try:
-                if self.proxy_manager is None:
-                    resp = requests.get(self.url)
-                else:
-                    resp = requests.get(self.url, proxies=prx)
+                resp = requests.get(self.url, proxies=prx, headers=current_headers)
             except Exception as e:
                 logging.info(f"Proxy {prx} not ready! Waiting for 10 seconds.")
                 time.sleep(10)

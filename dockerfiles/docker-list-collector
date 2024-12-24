@@ -3,7 +3,7 @@ FROM python:3.13.0-alpine
 WORKDIR /app
 
 COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir beautifulsoup4 requests pydo opensearch-py
+RUN pip install --no-cache-dir beautifulsoup4 requests pydo opensearch-py fake-useragent
 
 COPY . .
 
