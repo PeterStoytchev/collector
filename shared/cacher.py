@@ -6,8 +6,8 @@ from fake_useragent import UserAgent
 logger = logging.getLogger()
 
 def env_sleep():
-    sleep_min = os.getenv("SLEEP_MIN", 1)
-    sleep_max = os.getenv("SLEEP_MAX", 3)
+    sleep_min = int(os.environ.get("SLEEP_MIN", 1))
+    sleep_max = int(os.environ.get("SLEEP_MAX", 3))
 
     sleep_ammount = random.randrange(sleep_min, sleep_max)
     logger.info(f"Sleeping for {sleep_ammount}")
