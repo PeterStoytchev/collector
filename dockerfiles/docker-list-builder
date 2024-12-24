@@ -2,7 +2,7 @@ FROM python:3.13.0-alpine
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir beautifulsoup4 requests pydo fake-useragent
+RUN pip install --no-cache-dir beautifulsoup4 requests pydo fake-useragent, cchardet, lxml
 
 COPY . .
 

@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs
 
 from shared.filter import Filter, apply_filters
 import json
+import cchardet, lxml
 
 def clean_str(text: str) -> str:
     return ' '.join(text.strip().split())
@@ -13,7 +14,7 @@ class Car:
     
     def parse(self, html: str):
         self.attrs = {}
-        soup = bs(html, "html.parser")
+        soup = bs(html, "lxml")
         table_filter = Filter("table", {"class": "cardetailsout car2"})
         tr_filter = Filter("tr")
         
