@@ -26,8 +26,7 @@ def main():
     except Exception as e:
         pass
 
-    
-    pm = ProxyManager(24)
+    pm = ProxyManager()
     try:
         for car_link in data:
             car_data = Cached(car_link, pm)
@@ -35,7 +34,6 @@ def main():
             client.index(index='cars', body=car.attrs)
     finally:
         pm.close()
-
 
     logger.info('Fin!')
 

@@ -21,7 +21,7 @@ def create_droplet(client: Client, region_slug: str, size: str):
     return (resp["droplet"]["id"], droplet_name)
 
 class ProxyManager:
-    def __init__(self, max_proxies: int = 2):
+    def __init__(self, max_proxies: int = os.environ.get("MAX_PROXY_INSTANCES", 2)):
         self.client = Client(token=os.getenv("DIGITALOCEAN_TOKEN"))
         logging.getLogger('pydo').setLevel(logging.WARNING)
         logging.debug("Setup DigitalOcean client.")
