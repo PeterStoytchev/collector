@@ -6,6 +6,8 @@ from shared.proxymanager import ProxyManager
 
 from opensearchpy import OpenSearch
 
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+
 logger = logging.getLogger()
 
 pm = ProxyManager()
@@ -24,26 +26,30 @@ def main():
         print("Usage: python list_collector.py <json_array_file>")
         sys.exit(1)
 
-    logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO').upper(), format="%(asctime)s;%(levelname)s;%(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     logger.info('Starting...')
 
     f = open(sys.argv[1], "r", encoding="utf-8")
     data = json.loads(f.read())
     f.close()
 
-    client = OpenSearch(hosts=[os.environ.get("OPENSEARCH_URI")], verify_certs = False, ssl_show_warn=False)
-    try:
-        client.indices.create('cars')
-    except Exception as e:
-        # Make sure that you have a fresh index every time you run
-        client.indices.delete('cars')
-        client.indices.create('cars')
+    host = os.environ.get("OPENSEARCH_URI", None)
+
+    if host is not None:
+        client = OpenSearch(hosts=[], verify_certs = False, ssl_show_warn=False)
+        try:
+            client.indices.create('cars')
+        except Exception as e:
+            # Make sure that you have a fresh index every time you run
+            client.indices.delete('cars')
+            client.indices.create('cars')
 
     try:
         for car_link in data:
             car_data = Cached(car_link, pm)
-            car = Car(car_data.text)
-            client.index(index='cars', body=car.attrs)
+            
+            if host is not None:
+                car = Car(car_data.text)
+                client.index(index='cars', body=car.attrs)
     finally:
         exit_gracefully()
 
